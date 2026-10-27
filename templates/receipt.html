@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GKas Receipt</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #0b63f6;
+    --blue-dark: #0846b8;
+    --blue-light: #e8f0ff;
+    --ink: #0d2250;
+    --muted: #6b7fa8;
+    --line: #dfe7f5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', system-ui, sans-serif;
+    background: #dfe8f7;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 24px 12px;
+  }
+
+  /* Screenshot this element (.receipt) */
+  .receipt {
+    width: 100%;
+    max-width: 380px;
+    border-radius: 28px;
+    background: var(--blue);
+    padding: 56px 18px 22px;
+    box-shadow: 0 12px 36px rgba(11, 99, 246, .22);
+  }
+
+  .card {
+    position: relative;
+    background: #f4f7fc;
+    border-radius: 20px;
+    padding: 46px 22px 18px;
+    text-align: center;
+  }
+  .check {
+    position: absolute;
+    top: -30px; left: 50%;
+    transform: translateX(-50%);
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: var(--blue);
+    border: 4px solid #f4f7fc;
+    display: grid; place-items: center;
+    color: #fff;
+  }
+
+  .to-name {
+    font-size: 19px;
+    font-weight: 900;
+    color: var(--ink);
+    letter-spacing: .02em;
+  }
+  .to-number {
+    display: inline-block;
+    margin-top: 10px;
+    background: var(--blue-light);
+    color: var(--blue-dark);
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: .14em;
+    padding: 8px 18px;
+    border-radius: 999px;
+  }
+  .via {
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .rows {
+    margin-top: 22px;
+    border-top: 1px solid var(--line);
+    text-align: left;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 14px 2px;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+  .row .val { font-weight: 800; }
+  .row.total { font-size: 14px; padding: 18px 2px; }
+  .row.total .val {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--ink);
+  }
+
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 18px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-align: left;
+  }
+  .meta b { color: var(--ink); font-weight: 900; }
+  .meta .date { text-align: right; }
+
+  .note {
+    margin-top: 16px;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--muted);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<main class="receipt" id="receipt">
+  <section class="card">
+    <div class="check">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+    </div>
+
+    <div class="to-name" id="toName">Ju••••••• D.</div>
+    <div class="to-number" id="toNumber">09XYZ</div>
+    <div class="via">Sent via GKas</div>
+
+    <div class="rows">
+      <div class="row"><span>Amount</span><span class="val" id="amount">2,900</span></div>
+      <div class="row total"><span>Total Amount Sent</span><span class="val" id="total">₱ 2,900</span></div>
+    </div>
+
+    <div class="meta">
+      <div>Ref No. <b id="ref">3031 489 194341</b></div>
+      <div class="date" id="date">Aug 12, 2025 3:31 PM</div>
+    </div>
+
+    <div class="note">In-game transaction. Not real money.</div>
+  </section>
+</main>
+
+<script>
+  // ---- Edit these (or have your bot fill them in server-side) ----
+  const RECEIPT = {
+    toName: "Juan Dela Cruz",   // masked automatically
+    toNumber: "09XYZ",          // receiver's GKas number
+    amount: 2900,               // whole pesos
+    ref: null,                  // null = generate a random reference
+    date: null                  // null = now
+  };
+  // ----------------------------------------------------------------
+
+  const $ = id => document.getElementById(id);
+  const fmt = n => n.toLocaleString("en-PH", { maximumFractionDigits: 0 });
+
+  // "Juan Dela Cruz" -> "Ju•••••• C."
+  function maskName(full) {
+    const parts = full.trim().split(/\s+/);
+    const first = parts[0] || "";
+    const last = parts.length > 1 ? parts[parts.length - 1][0].toUpperCase() + "." : "";
+    return first.slice(0, 2) + "•".repeat(Math.max(first.length - 2, 3)) + (last ? " " + last : "");
+  }
+
+  // 13 digits grouped 4-3-6, e.g. "3031 489 194341"
+  function genRef() {
+    const d = n => Array.from({ length: n }, () => Math.floor(Math.random() * 10)).join("");
+    return `${d(4)} ${d(3)} ${d(6)}`;
+  }
+
+  const when = RECEIPT.date ? new Date(RECEIPT.date) : new Date();
+  const dateStr = when.toLocaleString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+    hour: "numeric", minute: "2-digit", hour12: true
+  });
+
+  $("toName").textContent = maskName(RECEIPT.toName);
+  $("toNumber").textContent = RECEIPT.toNumber;
+  $("amount").textContent = fmt(RECEIPT.amount);
+  $("total").textContent = "₱ " + fmt(RECEIPT.amount);
+  $("ref").textContent = RECEIPT.ref || genRef();
+  $("date").textContent = dateStr;
+</script>
+</body>
+</html>
