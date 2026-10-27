@@ -15,7 +15,7 @@ const APP_URL = 'https://app8886680607.tgcloud.ai/';
 const APP_LINK = 'https://t.me/SlotSpinsBot?startapp=play';
 const GIF_URL = APP_URL + 'giphy.gif';
 const ADMIN_ID = 8442877660;
-const MEDALS = ['🥇', '🥈', '🥉', '4.', '5.'];
+const MEDALS = ['🥇', '🥈', '🥉', '4.', '5.', '6.', '7.', '8.', '9.', '10.'];
 
 const fmt = (n) => `₱${Number(n).toLocaleString('en-US')}`;
 const nameOf = (p) => (p.username ? `@${p.username}` : `id ${p.tgId}`);
@@ -61,7 +61,7 @@ async function trackMember(message) {
   }
 }
 
-// top 5 balances among members seen in this chat
+// top 10 balances among members seen in this chat
 async function groupTop(chatId) {
   const members = await db.select({
     tgId: groupMembers.tgId,
@@ -72,7 +72,7 @@ async function groupTop(chatId) {
   const byId = new Map(members.map((m) => [m.tgId, m]));
   const top = await db.select().from(players)
     .where(inArray(players.tgId, members.map((m) => m.tgId)))
-    .orderBy(desc(players.balance)).limit(5).all();
+    .orderBy(desc(players.balance)).limit(10).all();
   return top.map((p, i) => {
     const m = byId.get(p.tgId) || {};
     const label = m.username ? `@${m.username}` : (m.firstName || `id ${p.tgId}`);
