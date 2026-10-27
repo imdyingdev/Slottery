@@ -221,10 +221,10 @@ export default async function (message, ctx) {
       await api.sendPhoto({
         ...reply,
         photo: new InputFile(png, 'receipt.png', { type: 'image/png' }),
-        caption: `✅ Sent ${fmt(amount)} to ${to.gkas} — balance ${fmt(fromBal)}`,
+        caption: `✅ Sent ${fmt(amount)} to ${to.gkas}`,
       });
     } catch {
-      await say(`✅ Sent ${fmt(amount)} to ${toName} (${to.gkas}) — balance ${fmt(fromBal)}`);
+      await say(`✅ Sent ${fmt(amount)} to ${toName} (${to.gkas})`);
     }
     await notifyUser(
       to.tgId,
