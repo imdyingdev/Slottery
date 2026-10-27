@@ -811,6 +811,39 @@ body {
   opacity: 0.6;
 }
 
+/* autoplay pill tucked under the SPIN button — counter shows spins left */
+#auto {
+  flex: none;
+  margin-top: -14px;
+  z-index: 11;
+  padding: 3px 18px;
+  border-radius: 999px;
+  border: 2px solid #4a4066;
+  background: linear-gradient(180deg, #232030 0%, #14121e 100%);
+  color: #cfc6ee;
+  font-family: "Anton", sans-serif;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  transition: transform 0.06s ease, border-color 0.2s ease;
+}
+
+#auto b {
+  color: #ffd76a;
+  margin-left: 2px;
+}
+
+#auto:active {
+  transform: scale(0.96);
+}
+
+/* running — gold outline so it reads as armed */
+#auto.on {
+  border-color: #ffd76a;
+  background: linear-gradient(180deg, #27448f 0%, #152a63 100%);
+}
+
 /* odds display — grayed at ×1 (bet 100), lights up gold when boosted */
 #odds {
   padding: 3px 16px;

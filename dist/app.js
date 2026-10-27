@@ -478,7 +478,9 @@ function fitFrame() {
   // the machine only leaves room for the spin button (the way it always
   // sized); if the jackpot can't fit below, #app scrolls a little instead
   // of the machine shrinking — on phones the width cap binds first anyway
-  const availH = appRect.height - padV - gap - spinBtn.offsetHeight;
+  const autoEl = document.getElementById("auto");
+  const autoH = autoEl ? Math.max(0, autoEl.offsetHeight - 14) + gap : 0;
+  const availH = appRect.height - padV - gap - spinBtn.offsetHeight - autoH;
   const availW = frameEl.clientWidth;
   let h = availH;
   let w = h * FRAME_ASPECT;
@@ -648,8 +650,9 @@ function settle() {
   pendingResult = null;
   spinning = false;
   spinBtn.disabled = false;
-  betBtn.disabled = false;
+  betBtn.disabled = autoActive;
   document.body.classList.remove("spinning");
+  onSpinDone(payout, mult);
 }
 
 let lastSpinWon = false; // previous spin paid → higher "here we go" odds
@@ -1272,11 +1275,11 @@ infoEl.addEventListener("click", (e) => {
 
 const oddsEl = document.getElementById("odds");
 betBtn.addEventListener("click", () => {
-  if (spinning) return;
+  if (spinning || autoActive) return;
   betIdx = (betIdx + 1) % BETS.length;
   const { bet, mult } = currentBet();
   betBtn.innerHTML = `BET <b>${bet.toLocaleString("en-US")}</b>`;
-  oddsEl.innerHTML = `ODDS <b>×${mult}</b>`;
+  oddsEl.innerHTML = `M <b>×${mult}</b>`;
   oddsEl.classList.toggle("hot", mult > 1);
 });
 
@@ -1318,7 +1321,59 @@ histEl.addEventListener("click", (e) => {
   if (e.target === histEl) histEl.hidden = true;
 });
 
-spinBtn.addEventListener("click", () => spin());
+// ===== autoplay: 5 spins, each waits for the previous one (and its win
+// presentation) to finish; the counter shows spins left, then resets to 5 =====
+const AUTO_TOTAL = 5;
+const autoBtn = document.getElementById("auto");
+let autoActive = false;
+let autoLeft = AUTO_TOTAL;
+let autoTimer = null;
+
+function renderAuto() {
+  autoBtn.innerHTML = `AUTO <b>${autoLeft}</b>`;
+  autoBtn.classList.toggle("on", autoActive);
+}
+
+function stopAuto() {
+  autoActive = false;
+  clearTimeout(autoTimer);
+  autoLeft = AUTO_TOTAL;
+  betBtn.disabled = spinning;
+  renderAuto();
+}
+
+function runAutoSpin() {
+  if (!autoActive || spinning) return;
+  if (balance < currentBet().bet) return stopAuto(); // out of credits
+  autoLeft--;
+  renderAuto();
+  spin();
+}
+
+// called when a spin fully settles — queue the next one after the win
+// presentation (win bar / lightning strike) has had time to play
+function onSpinDone(payout, mult) {
+  if (!autoActive) return;
+  if (autoLeft <= 0) return stopAuto();
+  const wait = payout > 0 ? (mult > 1 ? 6000 : 3200) : 1500;
+  autoTimer = setTimeout(runAutoSpin, wait);
+}
+
+autoBtn.addEventListener("click", () => {
+  if (autoActive) return stopAuto(); // tap again to cancel; a running spin still finishes
+  if (spinning) return;
+  autoActive = true;
+  autoLeft = AUTO_TOTAL;
+  betBtn.disabled = true;
+  runAutoSpin();
+});
+
+renderAuto();
+
+spinBtn.addEventListener("click", () => {
+  if (autoActive && !spinning) stopAuto(); // manual spin takes over from autoplay
+  spin();
+});
 
 // ===== jackpot flames — ported from "Flaming Border.html" =====
 // a tap on the banner ramps particle fire around its edges for ~1.3s
