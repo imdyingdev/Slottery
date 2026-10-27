@@ -25,13 +25,13 @@
     padding: 24px 12px;
   }
 
-  /* Screenshot this element (.receipt) */
+  /* Screenshot this element (.receipt) — transparent shell, just headroom
+     for the check badge that overflows the card's top edge */
   .receipt {
     width: 100%;
     max-width: 380px;
-    background: var(--blue);
-    padding: 56px 18px 22px;
-    box-shadow: 0 12px 36px rgba(11, 99, 246, .22);
+    background: transparent;
+    padding: 36px 0 0;
   }
 
   .card {
