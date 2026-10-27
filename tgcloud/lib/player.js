@@ -28,6 +28,33 @@ export async function getOrCreate(user) {
   return created || { tgId: user.id, username: uname, firstName: name, balance: 1000 };
 }
 
+// random GKAS code: "09" + 3 letters (17,576 combos)
+const genGkas = () =>
+  '09' +
+  Array.from({ length: 3 }, () => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join('');
+
+// get the player's GKAS number, assigning a unique one on first use
+export async function ensureGkas(user) {
+  const p = await getOrCreate(user);
+  if (p.gkas) return p;
+  for (let i = 0; i < 10; i++) {
+    const code = genGkas();
+    try {
+      await db.update(players).set({ gkas: code }).where(eq(players.tgId, p.tgId)).run();
+      return { ...p, gkas: code };
+    } catch {
+      // unique collision — try another code
+    }
+  }
+  return p; // extremely unlikely; gkas stays null
+}
+
+// find a player by GKAS number ("09ABC" / "09 ABC", case-insensitive)
+export async function findByGkas(raw) {
+  const code = String(raw).replace(/\s+/g, '').toUpperCase();
+  return db.select().from(players).where(eq(players.gkas, code)).get();
+}
+
 // find by numeric tg id, @username, or display name — all case-insensitive
 export async function findPlayer(ref) {
   if (/^\d+$/.test(ref)) {

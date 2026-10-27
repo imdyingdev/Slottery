@@ -5,7 +5,7 @@
 import { api, fetch, InputFile } from 'sdk';
 import db, { eq, inArray, desc } from 'sdk/db';
 import { players, spins, groupMembers } from '../schema.js';
-import { findPlayer, getOrCreate } from '../lib/player.js';
+import { findPlayer, getOrCreate, ensureGkas, findByGkas } from '../lib/player.js';
 
 // slotsbackend (Puppeteer renderer on Render) — key matches the API_KEY env var
 const BACKEND_URL = 'https://slotmachine-a0n1.onrender.com';
@@ -80,11 +80,8 @@ async function groupTop(chatId) {
   });
 }
 
-// GKAS number = "09" + telegram id, grouped by 3 → 1234899 => "091 234 899"
-const gkasNumber = (id) => `09${id}`.replace(/(\d{3})(?=\d)/g, '$1 ');
-
-async function renderGkas(payload) {
-  const res = await fetch(`${BACKEND_URL}/gkas`, {
+async function renderImage(path, payload) {
+  const res = await fetch(`${BACKEND_URL}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': BACKEND_KEY },
     body: JSON.stringify(payload),
@@ -112,28 +109,77 @@ export default async function (message, ctx) {
 
   await trackMember(message);
 
-  // /gkas — the sender's slots balance as a GKas wallet card image
+  // /gkas — the sender's slots balance as a GKas wallet card image,
+  // with a Copy Number button so they can share their code
   if (/^\/gkas(?:@\w+)?\s*$/i.test(text) && message.from) {
-    const p = await getOrCreate(message.from);
+    const p = await ensureGkas(message.from);
     const payload = {
       name: message.from.first_name || message.from.username || 'Player',
       balance: p.balance,
-      number: gkasNumber(message.from.id),
+      number: p.gkas || `09${message.from.id}`,
+    };
+    const markup = {
+      inline_keyboard: [[{ text: '📋 Copy Number', copy_text: { text: payload.number } }]],
     };
     const reply = { ...dest(message), reply_parameters: { message_id: message.message_id } };
     try {
       if (!BACKEND_URL) throw new Error('no backend');
-      const png = await renderGkas(payload);
+      const png = await renderImage('/gkas', payload);
       await api.sendPhoto({
         ...reply,
         photo: new InputFile(png, 'gkas.png', { type: 'image/png' }),
+        reply_markup: markup,
       });
     } catch {
       await api.sendMessage({
         ...reply,
         text: `💳 GKas ${payload.number}\n${payload.name} — ${fmt(payload.balance)}`,
+        reply_markup: markup,
       });
     }
+    return;
+  }
+
+  // /send <gkas number>, <amount> — transfer balance to another player,
+  // works in the bot DM and in groups; replies with the GKas receipt
+  const send = text.match(/^\/send\s+(09\s?[a-z]{3})\s*,\s*(\d+)/i);
+  if (send && message.from) {
+    const code = send[1].replace(/\s+/g, '').toUpperCase();
+    const amount = parseInt(send[2], 10);
+    const reply = { ...dest(message), reply_parameters: { message_id: message.message_id } };
+    const say = (t) => api.sendMessage({ ...reply, text: t });
+
+    const sender = await ensureGkas(message.from);
+    const to = await findByGkas(code);
+    if (!to) return say(`❌ No GKas account ${code} — check the number.`);
+    if (to.tgId === sender.tgId) return say('❌ You cannot send to yourself.');
+    if (amount < 1) return say('❌ Amount must be at least ₱1.');
+    if (sender.balance < amount)
+      return say(`❌ Not enough balance — you have ${fmt(sender.balance)}.`);
+
+    const fromBal = sender.balance - amount;
+    const toBal = to.balance + amount;
+    await db.update(players).set({ balance: fromBal }).where(eq(players.tgId, sender.tgId)).run();
+    await db.update(players).set({ balance: toBal }).where(eq(players.tgId, to.tgId)).run();
+    await db.insert(spins).values({ tgId: sender.tgId, bet: 0, payout: -amount, balance: fromBal, label: `TO ${to.gkas}` }).run();
+    await db.insert(spins).values({ tgId: to.tgId, bet: 0, payout: amount, balance: toBal, label: `FROM ${sender.gkas}` }).run();
+
+    const toName = to.firstName || to.username || 'Player';
+    try {
+      if (!BACKEND_URL) throw new Error('no backend');
+      const png = await renderImage('/receipt', { toName, toNumber: to.gkas, amount });
+      await api.sendPhoto({
+        ...reply,
+        photo: new InputFile(png, 'receipt.png', { type: 'image/png' }),
+        caption: `✅ Sent ${fmt(amount)} to ${to.gkas} — balance ${fmt(fromBal)}`,
+      });
+    } catch {
+      await say(`✅ Sent ${fmt(amount)} to ${toName} (${to.gkas}) — balance ${fmt(fromBal)}`);
+    }
+    await notifyUser(
+      to.tgId,
+      `💸 You received ${fmt(amount)} from ${message.from.first_name || message.from.username || 'a player'} (${sender.gkas}) — new balance ${fmt(toBal)}`
+    );
     return;
   }
 

@@ -1249,12 +1249,14 @@ document.getElementById("hist-btn").addEventListener("click", async () => {
   const rows = (r.spins || [])
     .map((s) => {
       const left =
-        s.bet === 0 ? "DEPOSIT" : `₱${s.bet.toLocaleString("en-US")}`;
+        s.bet === 0 ? (s.label ? "GKas" : "DEPOSIT") : `₱${s.bet.toLocaleString("en-US")}`;
       const mid =
-        s.bet === 0 || s.payout > 0
-          ? `+₱${s.payout.toLocaleString("en-US")}`
-          : `−₱${s.bet.toLocaleString("en-US")}`;
-      const cls = s.bet === 0 || s.payout > 0 ? "won" : "lost";
+        s.bet === 0
+          ? `${s.payout < 0 ? "−" : "+"}₱${Math.abs(s.payout).toLocaleString("en-US")}`
+          : s.payout > 0
+            ? `+₱${s.payout.toLocaleString("en-US")}`
+            : `−₱${s.bet.toLocaleString("en-US")}`;
+      const cls = s.bet === 0 ? (s.payout < 0 ? "lost" : "won") : s.payout > 0 ? "won" : "lost";
       const tag = s.label
         ? `<span class="tag">${s.label}</span>`
         : `<span class="tag dim">—</span>`;

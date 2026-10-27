@@ -1,11 +1,14 @@
-import { table, integer, text, sql, primaryKey } from 'sdk/db';
+import { table, integer, text, sql, primaryKey, uniqueIndex } from 'sdk/db';
 
 export const players = table('players', {
   tgId: integer('tg_id').primaryKey(),
   username: text('username'),
   firstName: text('first_name'),
+  gkas: text('gkas'), // GKAS number: "09" + 3 letters — unique index below
   balance: integer('balance').notNull().default(1000),
-});
+}, (t) => ({
+  gkasUq: uniqueIndex('players_gkas_uq').on(t.gkas),
+}));
 
 export const spins = table('spins', {
   id: integer('id').primaryKey({ autoIncrement: true }),
