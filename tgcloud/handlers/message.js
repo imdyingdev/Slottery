@@ -3,7 +3,7 @@
 // payload (here, a Message). The full update is available as `ctx.update`.
 
 import { api, fetch, InputFile } from 'sdk';
-import db, { eq, inArray, desc } from 'sdk/db';
+import db, { eq, inArray, desc, sql } from 'sdk/db';
 import { players, spins, groupMembers } from '../schema.js';
 import { findPlayer, getOrCreate, ensureGkas, findByGkas } from '../lib/player.js';
 
@@ -16,6 +16,9 @@ const APP_LINK = 'https://t.me/SlotSpinsBot?startapp=play';
 const GIF_URL = APP_URL + 'giphy.gif';
 const BOT_LINK = 'https://t.me/SlotSpinsBot';
 const REFERRAL_BONUS = 3000;
+const REFERRAL_CAP = 5; // new players each inviter can earn from
+const referralCount = async (id) =>
+  (await db.get(sql`select count(*) n from players where referred_by = ${id}`))?.n ?? 0;
 const ADMIN_ID = 8442877660;
 const MEDALS = ['🥇', '🥈', '🥉', '4.', '5.', '6.', '7.', '8.', '9.', '10.'];
 
@@ -337,10 +340,18 @@ export default async function (message, ctx) {
   if (/^\/referral(?:@\w+)?\s*$/i.test(text) && message.from) {
     if (isGroup) return;
     const link = `${BOT_LINK}?start=ref_${message.from.id}`;
+    const used = await referralCount(message.from.id);
+    if (used >= REFERRAL_CAP) {
+      await api.sendMessage({
+        chat_id: message.chat.id,
+        text: `🎁 Referrals ${used}/${REFERRAL_CAP} — you've reached the limit, no more referral bonuses.`,
+      });
+      return;
+    }
     await api.sendMessage({
       chat_id: message.chat.id,
       text:
-        `🎰 Join me on Slottery!\n\nYou both get ${fmt(REFERRAL_BONUS)} free credits when you join.\n\n${link}`,
+        `🎰 Join me on Slottery!\n\nYou both get ${fmt(REFERRAL_BONUS)} free credits when you join.\n\n${link}\n\n👥 Referrals: ${used}/${REFERRAL_CAP}`,
       reply_markup: {
         inline_keyboard: [[{ text: `🎁 Claim ${fmt(REFERRAL_BONUS)}`, url: link }]],
       },
@@ -358,13 +369,14 @@ export default async function (message, ctx) {
     const referrer = refId !== message.from.id
       ? await db.select().from(players).where(eq(players.tgId, refId)).get()
       : null;
-    if (!existing && referrer) {
+    if (!existing && referrer && (await referralCount(refId)) < REFERRAL_CAP) {
       const balance = 1000 + REFERRAL_BONUS;
       await db.insert(players).values({
         tgId: message.from.id,
         username: message.from.username || null,
         firstName: [message.from.first_name, message.from.last_name].filter(Boolean).join(' ') || null,
         balance,
+        referredBy: refId,
       }).onConflictDoNothing({ target: players.tgId }).run();
       await db.insert(spins).values({
         tgId: message.from.id, bet: 0, payout: REFERRAL_BONUS, balance, label: 'REFERRAL BONUS',
@@ -377,7 +389,7 @@ export default async function (message, ctx) {
       }).run();
       await notifyUser(
         refId,
-        `🎉 ${message.from.first_name || 'Someone'} joined through your referral link — you got ${fmt(REFERRAL_BONUS)}! New balance ${fmt(refBal)}`
+        `🎉 ${message.from.first_name || 'Someone'} joined through your referral link — you got ${fmt(REFERRAL_BONUS)}! New balance ${fmt(refBal)} (${await referralCount(refId)}/${REFERRAL_CAP} referrals)`
       );
       await api.sendMessage({
         chat_id: message.chat.id,

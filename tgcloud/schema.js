@@ -8,6 +8,7 @@ export const players = table('players', {
   balance: integer('balance').notNull().default(1000),
   lastGkasAt: integer('last_gkas_at'), // /gkas cooldown (unix)
   lastSendAt: integer('last_send_at'), // /send cooldown (unix)
+  referredBy: integer('referred_by'), // tg id of the inviter (referral cap = count of these)
 }, (t) => ({
   gkasUq: uniqueIndex('players_gkas_uq').on(t.gkas),
 }));
