@@ -63,6 +63,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* if frame+spin+jackpot exceed the window, scroll a touch instead of
+     letting overflow:hidden clip the jackpot below the fold */
+  overflow-y: auto;
+  scrollbar-width: none;
   /* extra top room so the frame clears the credits widget + header buttons */
   padding: calc(70px + env(safe-area-inset-top)) 12px
     calc(12px + env(safe-area-inset-bottom));

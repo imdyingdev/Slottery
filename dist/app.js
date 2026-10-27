@@ -475,18 +475,16 @@ function fitFrame() {
   const padV =
     parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
   const gap = parseFloat(styles.gap) || 0;
-  // reserve vertical room for the spin button AND the jackpot banner
-  // (height + its 16px top margin + both flex gaps) so the whole column
-  // stays on screen when the window is enlarged
-  const jackpotH = (jackpotBox?.offsetHeight || 0) + 16;
-  const availH =
-    appRect.height - padV - gap * 2 - spinBtn.offsetHeight - jackpotH;
+  // the machine only leaves room for the spin button (the way it always
+  // sized); if the jackpot can't fit below, #app scrolls a little instead
+  // of the machine shrinking — on phones the width cap binds first anyway
+  const availH = appRect.height - padV - gap - spinBtn.offsetHeight;
   const availW = frameEl.clientWidth;
   let h = availH;
   let w = h * FRAME_ASPECT;
-  // cap the machine on big desktop windows — past ~600px the art just
-  // grows without adding playable area
-  const maxW = Math.min(availW, 600);
+  // modest cap so big desktop windows scale it up only a little —
+  // past ~640px the art just grows without adding playable area
+  const maxW = Math.min(availW, 640);
   if (w > maxW) {
     w = maxW;
     h = w / FRAME_ASPECT;

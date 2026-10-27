@@ -22,6 +22,13 @@ export const spins = table('spins', {
   created: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
+// monotonic key/value store — the grand jackpot pool lives here so
+// /reset (which deletes a player's spins) can never shrink it
+export const meta = table('meta', {
+  key: text('key').primaryKey(),
+  value: integer('value').notNull(),
+});
+
 // who has been seen in which group chat — powers the per-group leaderboard
 export const groupMembers = table('group_members', {
   chatId: integer('chat_id').notNull(),
