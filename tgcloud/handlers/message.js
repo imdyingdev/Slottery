@@ -126,6 +126,15 @@ export default async function (message, ctx) {
   // /gkas — the sender's slots balance as a GKas wallet card image,
   // with a Copy Number button so they can share their code
   if (/^\/gkas(?:@\w+)?\s*$/i.test(text) && message.from) {
+    const me = await db.select().from(players).where(eq(players.tgId, message.from.id)).get();
+    if (!me) {
+      await api.sendMessage({
+        ...dest(message),
+        reply_parameters: { message_id: message.message_id },
+        text: '💳 You are not registered yet — send me a message first!',
+      });
+      return;
+    }
     const wait = await cooldownLeft(message.from.id, 'lastGkasAt');
     if (wait > 0) {
       await api.sendMessage({
@@ -167,6 +176,15 @@ export default async function (message, ctx) {
   // works in the bot DM and in groups; replies with the GKas receipt
   const send = text.match(/^\/send\s+(09\s?[a-z]{3})\s*,\s*(\d+)/i);
   if (send && message.from) {
+    const me = await db.select().from(players).where(eq(players.tgId, message.from.id)).get();
+    if (!me) {
+      await api.sendMessage({
+        ...dest(message),
+        reply_parameters: { message_id: message.message_id },
+        text: '💳 You are not registered yet — send me a message first!',
+      });
+      return;
+    }
     const wait = await cooldownLeft(message.from.id, 'lastSendAt');
     if (wait > 0) {
       await api.sendMessage({
