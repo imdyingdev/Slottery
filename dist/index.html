@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Slots</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=91" />
+</head>
+<body>
+  <!-- directional blur for the spinning reels (vertical only), one per column
+       so each reel's blur can fade out before it stops -->
+  <svg width="0" height="0" style="position: absolute">
+    <filter id="vblur0"><feGaussianBlur stdDeviation="0 8" /></filter>
+    <filter id="vblur1"><feGaussianBlur stdDeviation="0 8" /></filter>
+    <filter id="vblur2"><feGaussianBlur stdDeviation="0 8" /></filter>
+  </svg>
+
+  <div id="topright">
+    <button id="music-btn" aria-label="Music">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none" />
+        <g class="waves">
+          <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+          <path d="M18.2 6a9 9 0 0 1 0 12" />
+        </g>
+        <g class="slash">
+          <line x1="15" y1="9" x2="21" y2="15" />
+          <line x1="21" y1="9" x2="15" y2="15" />
+        </g>
+      </svg>
+    </button>
+    <button id="hist-btn" aria-label="History">&#8635;</button>
+    <button id="info-btn" aria-label="Info">i</button>
+  </div>
+  <div id="history" hidden>
+    <div id="hist-card">
+      <button id="hist-close">✕</button>
+      <div id="hist-body"></div>
+    </div>
+  </div>
+  <div id="info" hidden>
+    <div id="info-card">
+      <button id="info-close">✕</button>
+      <div id="info-body"></div>
+    </div>
+  </div>
+
+  <div id="credits">
+    <img src="credits.png" alt="" draggable="false" />
+    <span id="credit-val">1,000</span>
+  </div>
+
+  <div id="app">
+
+    <div id="frame">
+      <div id="frame-inner">
+        <canvas id="fx" aria-hidden="true"></canvas>
+        <div id="grid">
+          <div class="col-line" style="left: 32.8%"></div>
+          <div class="col-line" style="left: 67.2%"></div>
+        </div>
+        <img id="frame-img" src="slot-border.png" alt="" />
+        <div id="win-bar"><span id="win-bar-txt"></span></div>
+        <div id="controls">
+          <button id="bet">BET <b>100</b></button>
+          <div id="odds">ODDS <b>×1</b></div>
+        </div>
+      </div>
+    </div>
+
+    <button id="spin"><img src="spin-button.png" alt="SPIN" draggable="false" /></button>
+    <div id="jackpot">
+      <img src="grandjackpot.png" alt="GRAND JACKPOT" draggable="false" />
+      <span id="jackpot-val">₱0</span>
+    </div>
+  </div>
+
+  <canvas id="coins" aria-hidden="true"></canvas>
+  <canvas id="fire" aria-hidden="true"></canvas>
+
+  <!-- intro: SLOTTERY logo + PLAY — the tap also unlocks the audio context -->
+  <div id="intro">
+    <img id="intro-logo" src="slottery.jpg" alt="SLOTTERY" draggable="false" />
+    <button id="start-btn"><img src="start-button.png" alt="PLAY" draggable="false" /></button>
+  </div>
+
+  <script src="app.js?v=92"></script>
+</body>
+</html>

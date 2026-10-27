@@ -1,0 +1,893 @@
+:root {
+  /* Grid position inside slot-border.png's transparent opening.
+     Measured: inner wall is ~9-91% x, ~8-91% y — the grid tucks slightly
+     under the art (which renders above the reels). */
+  --grid-left: 11%;
+  --grid-right: 11%;
+  --grid-top: 9.5%;
+  --grid-bottom: 9.5%;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+@font-face {
+  font-family: "CasinoFlat";
+  src: url("fonts/CasinoFlat-Italic.ttf") format("truetype");
+  font-style: italic;
+  font-display: swap;
+}
+
+body {
+  background: var(--tg-theme-bg-color, #0e1621);
+  color: #fff;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  user-select: none;
+}
+
+#app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* extra top room so the frame clears the credits widget + header buttons */
+  padding: calc(70px + env(safe-area-inset-top)) 12px
+    calc(12px + env(safe-area-inset-bottom));
+  gap: 8px;
+}
+
+/* coin + value pill pinned to the top-right of the screen — the pill is
+   inline-flex with no fixed width so it stretches as the number grows */
+#credits {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top));
+  left: 12px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+}
+
+/* full-screen transparent canvas that carries the coin shower */
+#coins {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* top-right corner buttons: history + info */
+#topright {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top));
+  right: 12px;
+  z-index: 25;
+  display: flex;
+  gap: 8px;
+}
+
+#info-btn,
+#hist-btn,
+#music-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #ffd76a;
+  background: linear-gradient(180deg, #27448f 0%, #152a63 100%);
+  color: #ffd76a;
+  font-size: 15px;
+  font-weight: 800;
+  font-style: italic;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+#hist-btn,
+#music-btn {
+  font-style: normal;
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* custom speaker icon — waves show when music is on, an X when muted */
+#music-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#music-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+#music-btn .slash {
+  display: none;
+}
+
+#music-btn.muted .waves {
+  display: none;
+}
+
+#music-btn.muted .slash {
+  display: block;
+}
+
+/* history modal reuses the info modal's look */
+#history {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+#history[hidden] {
+  display: none;
+}
+
+#hist-card {
+  position: relative;
+  width: min(92vw, 340px);
+  max-height: 70dvh;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #241046 0%, #150827 100%);
+  border: 2px solid #ffd76a;
+  border-radius: 16px;
+  padding: 20px 18px;
+  color: #e8dcff;
+  font-size: 13px;
+}
+
+#hist-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffd76a;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#hist-body h2 {
+  color: #ffd76a;
+  font-size: 16px;
+  letter-spacing: 1px;
+  margin: 0 0 10px;
+}
+
+.hist-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 2px;
+  border-bottom: 1px solid rgba(255, 215, 106, 0.15);
+  font-variant-numeric: tabular-nums;
+}
+
+.hist-row .bet {
+  color: #c9b8ec;
+}
+
+.hist-row .tag {
+  flex: 1;
+  margin: 0 8px;
+  text-align: center;
+  color: #ffd76a;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hist-row .tag.dim {
+  color: #5a4d85;
+  font-weight: 400;
+}
+
+.hist-row .won {
+  color: #7dffa8;
+  font-weight: 700;
+}
+
+.hist-row .lost {
+  color: #8f7fb5;
+}
+
+#info {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+#info[hidden] {
+  display: none;
+}
+
+#info-card {
+  position: relative;
+  width: min(92vw, 360px);
+  max-height: 82dvh;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #241046 0%, #150827 100%);
+  border: 2px solid #ffd76a;
+  border-radius: 16px;
+  padding: 20px 18px;
+  color: #e8dcff;
+  font-size: 13px;
+}
+
+#info-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffd76a;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#info-body h2 {
+  color: #ffd76a;
+  font-size: 16px;
+  letter-spacing: 1px;
+  margin: 14px 0 6px;
+}
+
+#info-body h2:first-child {
+  margin-top: 0;
+}
+
+#info-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+
+#info-body th,
+#info-body td {
+  padding: 3px 4px;
+  border-bottom: 1px solid rgba(255, 215, 106, 0.15);
+}
+
+#info-body th {
+  color: #ffd76a;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#info-body th:first-child {
+  text-align: left;
+}
+
+#info-body td:last-child,
+#info-body td:not(:first-child) {
+  text-align: right;
+  color: #ffd76a;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+#info-body p {
+  margin: 6px 0;
+  color: #c9b8ec;
+  line-height: 1.4;
+}
+
+#credits img {
+  width: 44px;
+  height: 44px;
+  margin-right: -18px; /* deeper overlap — fully hides the pill's flat left edge */
+  z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+#credit-val {
+  background: linear-gradient(180deg, #27448f 0%, #152a63 100%);
+  border: 2px solid #ffd76a;
+  /* flat left edge sits entirely under the coin art */
+  border-radius: 0 999px 999px 0;
+  text-align: center;
+  padding: 2px 26px 2px 30px;
+  font-family: "Anton", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: #ffd76a;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* #frame is the flex slot; #frame-inner is sized in px by JS to the image's
+   exact 1888:2272 aspect so the border never stretches. */
+#frame {
+  flex: none;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+#frame-inner {
+  position: relative;
+}
+
+/* gradient backdrop for the reels — inset so it fills the opening (and slips
+   a little under the opaque art) but never reaches the PNG's transparent
+   outer margin, which would show as a box around the frame */
+#frame-inner::before {
+  content: "";
+  position: absolute;
+  /* top clip is smaller: the frame's curved inner edge dips lower at the
+     center, so the gradient reaches higher to fill under it */
+  inset: 4% 8% 8%;
+  z-index: 0;
+  /* super-dark-violet edges, lighter violet center, gradual stops so the
+     color melts instead of banding */
+  background: linear-gradient(
+    180deg,
+    rgba(18, 6, 42, 0.92) 0%,
+    rgba(28, 10, 62, 0.9) 15%,
+    rgba(40, 18, 85, 0.88) 32%,
+    rgba(52, 26, 105, 0.88) 50%,
+    rgba(40, 18, 85, 0.88) 68%,
+    rgba(28, 10, 62, 0.9) 85%,
+    rgba(18, 6, 42, 0.92) 100%
+  );
+}
+
+/* border art sits ABOVE the reels: its center is transparent, so symbols
+   show through the opening and slide behind the opaque art while spinning */
+#frame-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+#grid {
+  position: absolute;
+  z-index: 1;
+  left: var(--grid-left);
+  right: var(--grid-right);
+  top: var(--grid-top);
+  bottom: var(--grid-bottom);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 3%;
+}
+
+/* each reel is one full-height column; symbols scroll through it as a strip */
+.reel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  font-size: clamp(40px, 14vmin, 96px);
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.9);
+}
+
+/* glowing pink-violet separators between the columns (absolutely positioned,
+   so they don't take part in the grid layout) */
+.col-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  z-index: 2;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 110, 220, 0.9) 15%,
+    rgba(255, 110, 220, 0.9) 85%,
+    transparent
+  );
+  box-shadow:
+    0 0 4px 1px rgba(255, 110, 235, 0.55),
+    0 0 10px rgba(220, 90, 255, 0.28);
+  pointer-events: none;
+  transition: box-shadow 0.6s ease;
+}
+
+/* glowing streaks that run along the lines while spinning (up + down).
+   Same 2px width as the line — a bright band traveling vertically, so the
+   glow never spills sideways over the symbol images */
+.col-line::before,
+.col-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 20%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 190, 245, 1) 50%,
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.spinning .col-line {
+  box-shadow:
+    0 0 7px 2px rgba(255, 110, 235, 0.8),
+    0 0 18px rgba(220, 90, 255, 0.45);
+}
+
+/* glow slides up/down INSIDE the line's height — alternate direction makes it
+   bounce smoothly; the right line is phase-shifted so they run opposite ways */
+.spinning .col-line:first-of-type::before {
+  opacity: 1;
+  animation: slide-glow 1.2s ease-in-out infinite alternate;
+}
+
+.spinning .col-line:nth-of-type(2)::after {
+  opacity: 1;
+  animation: slide-glow 1.2s ease-in-out -1.2s infinite alternate;
+}
+
+@keyframes slide-glow {
+  from { top: 0; }
+  to { top: 80%; }
+}
+
+/* clip window during a spin — extends past the opening into the opaque
+   border art, so the strip is only ever clipped where it's already hidden */
+.clip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+}
+
+.cell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.cell img,
+.sym img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 4px rgba(207, 168, 255, 0.4))
+    drop-shadow(0 0 2px rgba(207, 168, 255, 0.25));
+  pointer-events: none;
+}
+
+.strip {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+  /* vertical motion blur is set per-column in JS (vblur0/1/2) so each reel's
+     blur can fade out before it lands */
+}
+
+.sym {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.cell.win {
+  animation: pulse 0.45s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 106, 0.75));
+}
+
+/* static enlarge while a lightning strike is in progress — the heartbeat
+   pulse is applied only after the bolts finish */
+.cell.win-scale,
+.sym.win-scale {
+  transform: scale(1.14);
+  filter: drop-shadow(0 0 8px rgba(255, 215, 106, 0.75));
+  transition: transform 0.2s ease;
+}
+
+/* post-strike pulse: keeps the grown size and breathes around it — no
+   snap back to scale(1) when it takes over from .win-scale */
+.cell.win-pulse {
+  animation: pulse-big 0.45s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 106, 0.75));
+}
+
+@keyframes pulse-big {
+  from { transform: scale(1.14); }
+  to { transform: scale(1.28); }
+}
+
+@keyframes pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.15); }
+}
+
+/* multiplier tiles (top/bottom rows only) — bare text for now, PNGs later */
+.mult-txt {
+  font-family: "CasinoFlat", sans-serif;
+  font-style: italic;
+  font-size: clamp(18px, 7.5vmin, 44px);
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #ffe08a;
+  -webkit-text-stroke: 1px rgba(120, 50, 0, 0.55);
+  text-shadow:
+    0 0 8px rgba(255, 150, 40, 0.95),
+    0 0 20px rgba(255, 122, 18, 0.55),
+    0 2px 4px rgba(0, 0, 0, 0.85);
+}
+
+/* electric-blue flare + shake while a lightning bolt lands on a tile */
+.cell.hit {
+  filter: drop-shadow(0 0 8px rgba(110, 175, 255, 0.85))
+    drop-shadow(0 0 3px rgba(200, 230, 255, 0.7));
+  animation: strike-shake 0.12s linear infinite;
+}
+
+@keyframes strike-shake {
+  0% { transform: scale(1.12) translate(0, 0); }
+  25% { transform: scale(1.12) translate(-2px, 1px); }
+  50% { transform: scale(1.12) translate(2px, -1px); }
+  75% { transform: scale(1.12) translate(-1px, -2px); }
+  100% { transform: scale(1.12) translate(1px, 2px); }
+}
+
+/* lightning canvas — same z as #grid but earlier in the DOM, so the rings
+   and bolts draw UNDER the symbols (visible through the transparent art) */
+#fx {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* result pill pinned to the top of the machine — shows the accumulating
+   multiplier during strikes, then the spin's total win */
+#win-bar {
+  position: absolute;
+  left: 50%;
+  top: -0.5%;
+  transform: translateX(-50%) translateY(-8px);
+  z-index: 9;
+  min-width: 42%;
+  max-width: 92%; /* cap that also gives .closing a width to collapse from */
+  padding: 5px 18px;
+  border-radius: 999px;
+  /* metallic pink edge (gradient border) over a dark-violet fill —
+     padding-box/border-box layers keep the pill's rounded corners */
+  border: 2px solid transparent;
+  background:
+    linear-gradient(180deg, #3d1a70 0%, #1b0938 100%) padding-box,
+    linear-gradient(
+        180deg,
+        #ffd7f2 0%,
+        #ff9ae4 30%,
+        #ff5fd0 55%,
+        #c2329d 85%,
+        #ff8add 100%
+      )
+      border-box;
+  color: #ffd76a;
+  font-family: "Anton", sans-serif;
+  font-size: clamp(15px, 5vmin, 24px);
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden; /* clips the ×N as it slides up and out of the bar */
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: opacity 0.2s ease, transform 0.2s ease,
+    max-width 0.35s ease, min-width 0.35s ease,
+    padding 0.35s ease, border-width 0.35s ease;
+}
+
+#win-bar.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* auto-close: real width collapse — box shrinks to 0 with the text clipped
+   inside, then it hides */
+#win-bar.closing {
+  min-width: 0;
+  max-width: 0 !important;
+  padding-left: 0;
+  padding-right: 0;
+  border-width: 0;
+}
+
+/* text swap: current value slides up + fades, new one rises in */
+#win-bar-txt {
+  display: inline-block;
+  transition: transform 0.24s ease, opacity 0.24s ease;
+}
+
+#win-bar-txt.txt-out {
+  transform: translateY(-130%);
+  opacity: 0;
+}
+
+#win-bar-txt.txt-in {
+  transform: translateY(130%);
+  opacity: 0;
+  transition: none;
+}
+
+/* jackpot gold gradient on the money text */
+#win-bar-txt,
+#jackpot-val {
+  background: linear-gradient(
+    180deg,
+    #fffce0 0%,
+    #fff5ad 12%,
+    #ffed7b 25%,
+    #ffe45b 40%,
+    #fff4b0 48%,
+    #ffdc43 54%,
+    #ffca24 68%,
+    #ffb313 82%,
+    #ed9208 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* ×N chip inherits the same gold gradient as the amount */
+
+#spin {
+  flex: none;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  /* pull the button up over the frame's bottom edge so it reads as
+     attached to the machine */
+  margin-top: -60px;
+  z-index: 10;
+  transition: transform 0.06s ease, opacity 0.06s ease;
+}
+
+#spin img {
+  display: block;
+  width: min(35vw, 140px);
+  pointer-events: none;
+  filter: drop-shadow(0 3px 6px rgba(255, 179, 0, 0.4));
+}
+
+#spin:active {
+  transform: translateY(3px) scale(0.98);
+}
+
+#spin:disabled {
+  filter: grayscale(1);
+}
+
+/* controls row hangs ~10px under the machine's bottom corners — the
+   centered SPIN button sits between the two pills */
+#controls {
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  top: calc(100% + 10px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+#controls > * {
+  pointer-events: auto;
+}
+
+#bet {
+  padding: 3px 16px;
+  border-radius: 999px;
+  border: 2px solid #ffd76a;
+  background: linear-gradient(180deg, #27448f 0%, #152a63 100%);
+  color: #e8dcff;
+  font-family: "Anton", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  transition: transform 0.06s ease;
+}
+
+#bet b {
+  color: #ffd76a;
+}
+
+#bet span {
+  color: #ffb37a;
+  font-weight: 800;
+  margin-left: 4px;
+}
+
+#bet:active {
+  transform: scale(0.96);
+}
+
+#bet:disabled {
+  filter: grayscale(0.7);
+  opacity: 0.6;
+}
+
+/* odds display — grayed at ×1 (bet 100), lights up gold when boosted */
+#odds {
+  padding: 3px 16px;
+  border-radius: 999px;
+  border: 2px solid #4a4066;
+  background: linear-gradient(180deg, #232030 0%, #14121e 100%);
+  color: #6f639a;
+  font-family: "Anton", sans-serif;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  transition: border-color 0.2s ease, color 0.2s ease, filter 0.2s ease;
+  filter: grayscale(0.9);
+}
+
+#odds b {
+  color: #6f639a;
+}
+
+#odds.hot {
+  border-color: #ffd76a;
+  background: linear-gradient(180deg, #27448f 0%, #152a63 100%);
+  color: #e8dcff;
+  filter: none;
+}
+
+#odds.hot b {
+  color: #ffd76a;
+}
+
+/* fullscreen canvas for the jackpot's flame particles */
+#fire {
+  position: fixed;
+  inset: 0;
+  /* BELOW the jackpot (z:5) so the flames read as burning behind the
+     banner — only their edges peek out around its silhouette */
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* flaming border on the jackpot banner — --lvl ramps 0→1 on tap */
+#jackpot {
+  border: 1px solid color-mix(in srgb, #ffe08a calc(var(--lvl, 0) * 100%), #6b4a2a);
+  border-radius: 18px;
+  cursor: pointer;
+}
+
+#jackpot::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--lvl, 0);
+  animation: jp-flicker 1.7s infinite ease-in-out;
+}
+
+/* irregular glow pulses so the border light never looks steady */
+@keyframes jp-flicker {
+  0%, 100% { box-shadow: 0 0 3px #ffb300, 0 0 9px rgba(255,106,0,.8), 0 0 18px rgba(255,60,0,.35); }
+  18%      { box-shadow: 0 0 2px #ffb300, 0 0 6px rgba(255,106,0,.6), 0 0 12px rgba(255,60,0,.25); }
+  35%      { box-shadow: 0 0 4px #ffc83d, 0 0 11px rgba(255,122,0,.9), 0 0 22px rgba(255,60,0,.45); }
+  58%      { box-shadow: 0 0 3px #ffb300, 0 0 8px rgba(255,106,0,.7), 0 0 16px rgba(255,60,0,.3); }
+  77%      { box-shadow: 0 0 4px #ffc83d, 0 0 10px rgba(255,122,0,.85), 0 0 20px rgba(255,60,0,.4); }
+}
+
+/* grand jackpot banner under the machine — the pool sits in the empty
+   middle between the two medallions */
+#jackpot {
+  position: relative;
+  flex: none;
+  width: min(92vw, 540px);
+  margin-top: 8px;
+  z-index: 5;
+}
+
+#jackpot img {
+  display: block;
+  width: 100%;
+}
+
+#jackpot-val {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  font-family: "Anton", sans-serif;
+  font-size: clamp(16px, 5.8vmin, 32px);
+  letter-spacing: 1px;
+  white-space: nowrap;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.65));
+}
+
+/* intro screen — black backdrop so the logo's dark edges blend seamlessly */
+#intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #050203;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4vh;
+  transition: opacity 0.45s ease;
+}
+
+#intro.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#intro-logo {
+  width: min(78vw, 420px);
+  pointer-events: none;
+}
+
+#start-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+
+#start-btn img {
+  width: min(38vw, 160px);
+  display: block;
+  pointer-events: none;
+}
+
+#start-btn:active {
+  transform: scale(0.94);
+}
+
+

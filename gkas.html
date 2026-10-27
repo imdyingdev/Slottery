@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GKas</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #0b63f6;
+    --blue-dark: #0846b8;
+    --blue-light: #e8f0ff;
+    --ink: #0d2250;
+    --muted: #6b7fa8;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', system-ui, sans-serif;
+    background: #dfe8f7;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 24px 12px;
+  }
+  .phone {
+    width: 100%;
+    max-width: 380px;
+    border-radius: 28px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #7fb0ff 0%, #e8f0ff 55%, #f4f7fc 100%);
+    padding: 22px 0 0;
+    box-shadow: 0 12px 36px rgba(11, 99, 246, .22);
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    margin-bottom: 18px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .logo {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: var(--white);
+    display: grid; place-items: center;
+    font-weight: 900; font-size: 22px;
+    box-shadow: 0 0 0 3px #fff;
+  }
+  .hello { font-size: 20px; font-weight: 900; color: var(--ink); }
+
+  .wallet {
+    background: var(--white);
+  }
+  .tab {
+    background: var(--blue);
+    color: var(--white);
+    font-weight: 800;
+    font-size: 14px;
+    padding: 12px 20px;
+  }
+  .balance-box { padding: 18px 20px 20px; }
+  .label { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: .04em; }
+  .balance-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 6px;
+  }
+  .balance {
+    font-size: 34px;
+    font-weight: 900;
+    color: var(--ink);
+    letter-spacing: -.01em;
+  }
+  .eye {
+    width: 38px; height: 38px;
+    border: 0; border-radius: 50%;
+    background: var(--blue-light);
+    color: var(--blue);
+    cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .eye:focus-visible, .copy:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+  .divider { height: 1px; background: #e6edf9; margin: 18px 0; }
+
+  .num-label { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: .04em; }
+  .num-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 8px;
+    background: var(--blue-light);
+    border-radius: 14px;
+    padding: 12px 14px;
+  }
+  .number {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--blue-dark);
+    letter-spacing: .14em;
+  }
+  .copy {
+    border: 0;
+    background: var(--blue);
+    color: var(--white);
+    font: inherit;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .copy:active { transform: scale(.96); }
+  .hint { margin-top: 10px; font-size: 12px; font-weight: 600; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<main class="phone">
+  <div class="top">
+    <div class="brand">
+      <div class="logo">G</div>
+      <div class="hello" id="hello">Hello!</div>
+    </div>
+  </div>
+
+  <section class="wallet">
+    <div class="tab">Wallet</div>
+    <div class="balance-box">
+      <div class="label">AVAILABLE BALANCE</div>
+      <div class="balance-row">
+        <div class="balance" id="balance">₱ 6,300</div>
+        <button class="eye" id="eye" aria-label="Show or hide balance">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="num-label">YOUR GKAS NUMBER</div>
+      <div class="num-row">
+        <div class="number" id="number">09ABC</div>
+        <button class="copy" id="copy">Copy</button>
+      </div>
+      <div class="hint">Share this number to receive money from other players.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+  // ---- Edit these (or have your bot fill them in) ----
+  const PLAYER = {
+    name: "Player",
+    balance: 6300,
+    number: null            // e.g. "09KQZ". null = generate a random one
+  };
+  // -----------------------------------------------------
+
+  // 09 + 3 letters A-Z = 26^3 = 17,576 unique numbers.
+  // Need more players? Use 4 letters: change 3 to 4 (456,976 unique).
+  function genNumber(letters = 3) {
+    const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let s = "09";
+    for (let i = 0; i < letters; i++) s += A[Math.floor(Math.random() * 26)];
+    return s;
+  }
+
+  const fmt = n => "₱ " + n.toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  const $ = id => document.getElementById(id);
+  const number = PLAYER.number || genNumber();
+  let hidden = false;
+
+  $("hello").textContent = "Hello, " + PLAYER.name + "!";
+  $("number").textContent = number;
+  $("balance").textContent = fmt(PLAYER.balance);
+
+  $("eye").onclick = () => {
+    hidden = !hidden;
+    $("balance").textContent = hidden ? "₱ ••••••" : fmt(PLAYER.balance);
+  };
+
+  $("copy").onclick = async () => {
+    try { await navigator.clipboard.writeText(number); } catch (e) {}
+    $("copy").textContent = "Copied";
+    setTimeout(() => $("copy").textContent = "Copy", 1200);
+  };
+</script>
+</body>
+</html>

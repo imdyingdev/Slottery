@@ -1,10 +1,28 @@
-import { table, integer, text } from 'sdk/db';
+import { table, integer, text, sql, primaryKey } from 'sdk/db';
 
-// Your database tables go here as named exports. Deploying this file registers the
-// schema; applying the changes (a migration) updates the database.
+export const players = table('players', {
+  tgId: integer('tg_id').primaryKey(),
+  username: text('username'),
+  firstName: text('first_name'),
+  balance: integer('balance').notNull().default(1000),
+});
 
-// Uncomment to define your first table:
-// export const users = table('users', {
-//   id:   integer('id').primaryKey({ autoIncrement: true }),
-//   name: text('name').notNull(),
-// });
+export const spins = table('spins', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  tgId: integer('tg_id').notNull(),
+  bet: integer('bet').notNull(),
+  payout: integer('payout').notNull().default(0),
+  balance: integer('balance').notNull(),
+  label: text('label'),
+  created: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+});
+
+// who has been seen in which group chat — powers the per-group leaderboard
+export const groupMembers = table('group_members', {
+  chatId: integer('chat_id').notNull(),
+  tgId: integer('tg_id').notNull(),
+  username: text('username'),
+  firstName: text('first_name'),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.chatId, t.tgId] }),
+}));
