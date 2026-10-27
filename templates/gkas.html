@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GKas</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #0b63f6;
+    --blue-dark: #0846b8;
+    --blue-light: #e8f0ff;
+    --ink: #0d2250;
+    --muted: #6b7fa8;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', system-ui, sans-serif;
+    background: transparent;
+    width: 380px;
+  }
+  .phone {
+    width: 380px;
+    border-radius: 28px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #7fb0ff 0%, #e8f0ff 55%, #f4f7fc 100%);
+    padding: 22px 0 0;
+  }
+  .top { display: flex; align-items: center; padding: 0 18px; margin-bottom: 18px; }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .logo {
+    flex: none;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: var(--white);
+    display: grid; place-items: center;
+    font-weight: 900; font-size: 22px;
+    box-shadow: 0 0 0 3px #fff;
+  }
+  .hello {
+    font-size: 20px; font-weight: 900; color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .wallet { background: var(--white); }
+  .tab { background: var(--blue); color: var(--white); font-weight: 800; font-size: 14px; padding: 12px 20px; }
+  .balance-box { padding: 18px 20px 20px; }
+  .label, .num-label { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: .04em; }
+  .balance { margin-top: 6px; font-size: 34px; font-weight: 900; color: var(--ink); letter-spacing: -.01em; }
+  .divider { height: 1px; background: #e6edf9; margin: 18px 0; }
+  .num-row {
+    margin-top: 8px;
+    background: var(--blue-light);
+    border-radius: 14px;
+    padding: 12px 14px;
+  }
+  .number { font-size: 26px; font-weight: 900; color: var(--blue-dark); letter-spacing: .14em; }
+  .hint { margin-top: 10px; font-size: 12px; font-weight: 600; color: var(--muted); }
+</style>
+</head>
+<body>
+<main class="phone" id="card">
+  <div class="top">
+    <div class="brand">
+      <div class="logo">G</div>
+      <div class="hello" id="hello">Hello!</div>
+    </div>
+  </div>
+  <section class="wallet">
+    <div class="tab">Wallet</div>
+    <div class="balance-box">
+      <div class="label">AVAILABLE BALANCE</div>
+      <div class="balance" id="balance">₱ 0</div>
+      <div class="divider"></div>
+      <div class="num-label">YOUR GKAS NUMBER</div>
+      <div class="num-row"><div class="number" id="number">09</div></div>
+      <div class="hint">Share this number to receive money from other players.</div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

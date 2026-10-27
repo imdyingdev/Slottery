@@ -1,0 +1,17 @@
+{
+  "name": "slotsbackend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Puppeteer image renderer for the Slots bot",
+  "type": "module",
+  "dependencies": {
+    "puppeteer": "^25.16.0"
+  }
+}
