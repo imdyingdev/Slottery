@@ -277,6 +277,17 @@ let zapBuf = null;
 loadSfx("sfx/lightning.mp3", (b) => (zapBuf = b));
 let winbarBuf = null;
 loadSfx("sfx/winbar.mp3", (b) => (winbarBuf = b));
+let fireBuf = null;
+loadSfx("sfx/fire.mp3", (b) => (fireBuf = b));
+
+// short fire whoosh when the jackpot banner is tapped
+function playFire() {
+  if (!fireBuf) return;
+  const src = audioCtx.createBufferSource();
+  src.buffer = fireBuf;
+  src.connect(audioCtx.destination);
+  src.start();
+}
 
 // tally sound while the win amount counts up
 function playWinbarSound() {
@@ -1448,7 +1459,8 @@ spinBtn.addEventListener("click", () => spin());
     ctx.globalAlpha = 1;
   }
 
-  // tap → burn hot for 2.5s, then ease out until nothing is left
+  // tap → burn hot for ~1.3s (matched to the fire.mp3 whoosh), then ease
+  // out until nothing is left
   let running = false, runUntil = 0;
   function frame(now) {
     const dt = Math.min((now - last) / 1000, 0.05);
@@ -1464,7 +1476,8 @@ spinBtn.addEventListener("click", () => spin());
   }
   function ignite() {
     resize(); // layout may have shifted since load
-    runUntil = performance.now() + 2500;
+    playFire();
+    runUntil = performance.now() + 1300;
     if (running) return;
     running = true;
     last = performance.now();
