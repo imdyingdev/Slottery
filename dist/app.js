@@ -1290,6 +1290,12 @@ spinBtn.addEventListener("click", () => spin());
     W = innerWidth; H = innerHeight;
     cv.width = W * dpr; cv.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    measure();
+  }
+  // the banner's rect is re-measured every frame — mobile layouts shift
+  // late (image load, Telegram viewport changes) and a stale rect put the
+  // fire at the bottom of the screen
+  function measure() {
     const r = box.getBoundingClientRect();
     rect = { x: r.left, y: r.top, w: r.width, h: r.height };
   }
@@ -1349,13 +1355,15 @@ spinBtn.addEventListener("click", () => spin());
   function spawn() {
     const p = pick();
     parts.push({
-      x: p.x + (Math.random() - 0.5) * 3,
-      y: p.y,
+      // a few px INSIDE the edge — the canvas sits behind the banner so most
+      // of each flame hides under the image and only tongues peek out
+      x: p.x + (Math.random() - 0.5) * 3 - p.nx * 4,
+      y: p.y - p.ny * 4,
       vx: p.nx * (1.5 + Math.random() * 4) + (Math.random() - 0.5) * 4,
       vy: p.ny * (6 + Math.random() * 14) - (25 + Math.random() * 40) * p.k,
       life: (0.3 + Math.random() * 0.3) * p.k * (0.35 + 0.65 * lvl),
       age: 0,
-      size: 3.5 + Math.random() * 4,
+      size: 2.5 + Math.random() * 3,
       seed: Math.random() * 6.28,
     });
   }
@@ -1431,6 +1439,7 @@ spinBtn.addEventListener("click", () => spin());
   function frame(now) {
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
+    measure(); // keep flames glued to the banner wherever layout lands
     const target = now < runUntil ? 1 : 0;
     lvl += (target - lvl) * Math.min(1, dt * (target ? 6 : 2.2));
     if (!target && lvl < 0.01) lvl = 0;

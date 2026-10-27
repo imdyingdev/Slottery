@@ -6,6 +6,8 @@ export const players = table('players', {
   firstName: text('first_name'),
   gkas: text('gkas'), // GKAS number: "09" + 3 letters — unique index below
   balance: integer('balance').notNull().default(1000),
+  lastGkasAt: integer('last_gkas_at'), // /gkas cooldown (unix)
+  lastSendAt: integer('last_send_at'), // /send cooldown (unix)
 }, (t) => ({
   gkasUq: uniqueIndex('players_gkas_uq').on(t.gkas),
 }));

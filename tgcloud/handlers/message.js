@@ -102,6 +102,20 @@ async function renderImage(path, payload) {
   return bytes;
 }
 
+// 30s per-user cooldown on the image commands — stamps the column up front
+// so even a failed render can't be spam-retried
+const COOLDOWN_SEC = 30;
+async function cooldownLeft(tgId, col) {
+  const now = Math.floor(Date.now() / 1000);
+  const row = await db.select().from(players).where(eq(players.tgId, tgId)).get();
+  const left = COOLDOWN_SEC - (now - (row?.[col] || 0));
+  if (left <= 0) {
+    await db.update(players).set({ [col]: now }).where(eq(players.tgId, tgId)).run();
+    return 0;
+  }
+  return left;
+}
+
 export default async function (message, ctx) {
   const text = (message.text || '').trim();
   const isAdmin = message.from?.id === ADMIN_ID;
@@ -112,6 +126,15 @@ export default async function (message, ctx) {
   // /gkas — the sender's slots balance as a GKas wallet card image,
   // with a Copy Number button so they can share their code
   if (/^\/gkas(?:@\w+)?\s*$/i.test(text) && message.from) {
+    const wait = await cooldownLeft(message.from.id, 'lastGkasAt');
+    if (wait > 0) {
+      await api.sendMessage({
+        ...dest(message),
+        reply_parameters: { message_id: message.message_id },
+        text: `⏳ Slow down — try /gkas again in ${wait}s.`,
+      });
+      return;
+    }
     const p = await ensureGkas(message.from);
     const payload = {
       name: message.from.first_name || message.from.username || 'Player',
@@ -144,6 +167,15 @@ export default async function (message, ctx) {
   // works in the bot DM and in groups; replies with the GKas receipt
   const send = text.match(/^\/send\s+(09\s?[a-z]{3})\s*,\s*(\d+)/i);
   if (send && message.from) {
+    const wait = await cooldownLeft(message.from.id, 'lastSendAt');
+    if (wait > 0) {
+      await api.sendMessage({
+        ...dest(message),
+        reply_parameters: { message_id: message.message_id },
+        text: `⏳ Slow down — try /send again in ${wait}s.`,
+      });
+      return;
+    }
     const code = send[1].replace(/\s+/g, '').toUpperCase();
     const amount = parseInt(send[2], 10);
     const reply = { ...dest(message), reply_parameters: { message_id: message.message_id } };

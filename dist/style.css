@@ -795,30 +795,9 @@ body {
   pointer-events: none;
 }
 
-/* flaming border on the jackpot banner — --lvl ramps 0→1 on tap */
+/* tap-target only — the fire itself is canvas particles on #fire */
 #jackpot {
-  border: 1px solid color-mix(in srgb, #ffe08a calc(var(--lvl, 0) * 100%), #6b4a2a);
-  border-radius: 18px;
   cursor: pointer;
-}
-
-#jackpot::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: var(--lvl, 0);
-  animation: jp-flicker 1.7s infinite ease-in-out;
-}
-
-/* irregular glow pulses so the border light never looks steady */
-@keyframes jp-flicker {
-  0%, 100% { box-shadow: 0 0 3px #ffb300, 0 0 9px rgba(255,106,0,.8), 0 0 18px rgba(255,60,0,.35); }
-  18%      { box-shadow: 0 0 2px #ffb300, 0 0 6px rgba(255,106,0,.6), 0 0 12px rgba(255,60,0,.25); }
-  35%      { box-shadow: 0 0 4px #ffc83d, 0 0 11px rgba(255,122,0,.9), 0 0 22px rgba(255,60,0,.45); }
-  58%      { box-shadow: 0 0 3px #ffb300, 0 0 8px rgba(255,106,0,.7), 0 0 16px rgba(255,60,0,.3); }
-  77%      { box-shadow: 0 0 4px #ffc83d, 0 0 10px rgba(255,122,0,.85), 0 0 20px rgba(255,60,0,.4); }
 }
 
 /* grand jackpot banner under the machine — the pool sits in the empty
