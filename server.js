@@ -11,6 +11,10 @@ if (!API_KEY) {
 }
 
 const TEMPLATE = await readFile(new URL('./templates/gkas.html', import.meta.url), 'utf8');
+// inlined as a data URI — setContent has no base URL to resolve relative srcs
+const ICON = `data:image/png;base64,${await readFile(
+  new URL('./templates/icon.png', import.meta.url)
+).then((b) => b.toString('base64'))}`;
 
 // one shared browser — launching Chromium per request is far too slow
 let browserP;
@@ -20,7 +24,9 @@ const getBrowser = () =>
     .then((b) => {
       b.on('disconnected', () => (browserP = null));
       return b;
-    }));
+    })
+    // a failed launch must not poison every future request
+    .catch((e) => ((browserP = null), Promise.reject(e))));
 
 const fmt = (n) => '₱ ' + Math.round(Number(n) || 0).toLocaleString('en-PH');
 
@@ -33,14 +39,16 @@ async function renderGkas({ name, balance, number }) {
     );
     // set via the DOM (textContent) so names can never inject markup
     await page.evaluate(
-      (n, b, num) => {
+      (n, b, num, icon) => {
         document.getElementById('hello').textContent = `Hello, ${n}!`;
         document.getElementById('balance').textContent = b;
         document.getElementById('number').textContent = num;
+        document.getElementById('logo-img').src = icon;
       },
       String(name || 'Player').slice(0, 40),
       fmt(balance),
-      String(number || '').slice(0, 20)
+      String(number || '').slice(0, 20),
+      ICON
     );
     await page.evaluate(() => document.fonts.ready);
     const card = await page.$('#card');
