@@ -383,6 +383,19 @@ musicBtn.addEventListener("click", () => {
   }
 });
 
+// scenic background toggle (top-right) — on by default, remembered
+const bgEl = document.getElementById("bg");
+const bgBtn = document.getElementById("bg-btn");
+let bgOn = localStorage.getItem("slots_bg") !== "off";
+bgEl.hidden = !bgOn;
+bgBtn.classList.toggle("off", !bgOn);
+bgBtn.addEventListener("click", () => {
+  bgOn = !bgOn;
+  localStorage.setItem("slots_bg", bgOn ? "on" : "off");
+  bgEl.hidden = !bgOn;
+  bgBtn.classList.toggle("off", !bgOn);
+});
+
 // ===== timing you can tweak =====
 // 0.99 = the tuned offset where hits line up; +3.0 = extra spin time before
 // the cascade — everything shifts later so sync is unchanged
