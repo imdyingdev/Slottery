@@ -9,7 +9,7 @@ import { meta, spins } from '../schema.js';
 async function ensurePool() {
   await db.run(sql`
     insert into meta (key, value)
-      select 'pool', coalesce(sum(bet), 0) from spins
+      select 'pool', coalesce(sum(bet), 0) from spins where true
     on conflict (key) do nothing
   `);
 }
@@ -26,7 +26,7 @@ export async function jackpotPool() {
 export async function addToJackpot(bet) {
   await db.run(sql`
     insert into meta (key, value)
-      select 'pool', coalesce(sum(bet), 0) from spins
+      select 'pool', coalesce(sum(bet), 0) from spins where true
     on conflict (key) do update set value = value + ${bet}
   `);
 }
