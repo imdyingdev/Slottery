@@ -309,7 +309,7 @@ function playZap() {
 
 // voice lines — decoded once, played on the result
 const voiceBufs = {};
-["4times", "5times", "6times", "congratulations", "jackpot", "gago", "ops"].forEach((n) =>
+["4times", "5times", "6times", "congratulations", "jackpot", "gago", "ops", "esmirin", "soclose", "here-we-go"].forEach((n) =>
   loadSfx(`sfx/voice/${n}.mp3`, (b) => (voiceBufs[n] = b))
 );
 // plays a voice clip; `delaySec` offsets it so lines don't overlap
@@ -652,6 +652,8 @@ function settle() {
   document.body.classList.remove("spinning");
 }
 
+let lastSpinWon = false; // previous spin paid → higher "here we go" odds
+
 async function spin() {
   const { bet, mult } = currentBet();
   if (spinning || balance < bet) return;
@@ -666,6 +668,8 @@ async function spin() {
   } catch {}
   tg?.HapticFeedback?.impactOccurred("medium");
   document.body.classList.add("spinning");
+  // hype line on tap — 30% chance, 60% right after a win
+  if (Math.random() < (lastSpinWon ? 0.6 : 0.3)) playVoice("here-we-go");
 
   balance -= bet;
   updateCredits();
@@ -742,12 +746,22 @@ async function spin() {
       Math.max(0, hearBase + nDelay)
     );
   }
-  // total loss — 40% chance of a gago/ops taunt, 60% stay silent
-  if (pre.midPay === 0 && pre.maxN < 4 && Math.random() < 0.4) {
-    setTimeout(
-      () => playVoice(Math.random() < 0.5 ? "gago" : "ops"),
-      Math.max(0, hearBase + 700)
-    );
+  lastSpinWon = pre.midPay > 0 || pre.maxN >= 4;
+  if (!lastSpinWon) {
+    // near miss: no payout but two of the three middle-row symbols match
+    const mid = finalsGrid.map((col) => col[1]);
+    const nearMiss =
+      (mid[0] === mid[1]) + (mid[1] === mid[2]) + (mid[0] === mid[2]) === 1;
+    if (nearMiss) {
+      setTimeout(() => playVoice("soclose"), Math.max(0, hearBase + 500));
+    } else if (Math.random() < 0.4) {
+      // total loss — 40% chance of a taunt, 60% stay silent
+      const taunts = ["gago", "ops", "esmirin"];
+      setTimeout(
+        () => playVoice(taunts[(Math.random() * taunts.length) | 0]),
+        Math.max(0, hearBase + 700)
+      );
+    }
   }
 
   const BLUR_CLEAR_LEAD = 1600; // blur is fully 0 this many ms before col 1 stops
