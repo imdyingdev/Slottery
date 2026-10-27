@@ -340,7 +340,7 @@ export default async function (message, ctx) {
     await api.sendMessage({
       chat_id: message.chat.id,
       text:
-        `🎰 Join me on Slottery!\n\nNew players claim ${fmt(REFERRAL_BONUS)} free credits right away.\n\n${link}`,
+        `🎰 Join me on Slottery!\n\nYou both get ${fmt(REFERRAL_BONUS)} free credits when you join.\n\n${link}`,
       reply_markup: {
         inline_keyboard: [[{ text: `🎁 Claim ${fmt(REFERRAL_BONUS)}`, url: link }]],
       },
@@ -369,7 +369,16 @@ export default async function (message, ctx) {
       await db.insert(spins).values({
         tgId: message.from.id, bet: 0, payout: REFERRAL_BONUS, balance, label: 'REFERRAL BONUS',
       }).run();
-      await notifyUser(refId, `🎉 ${message.from.first_name || 'Someone'} joined through your referral link!`);
+      // the inviter claims the same bonus
+      const refBal = referrer.balance + REFERRAL_BONUS;
+      await db.update(players).set({ balance: refBal }).where(eq(players.tgId, refId)).run();
+      await db.insert(spins).values({
+        tgId: refId, bet: 0, payout: REFERRAL_BONUS, balance: refBal, label: 'REFERRAL BONUS',
+      }).run();
+      await notifyUser(
+        refId,
+        `🎉 ${message.from.first_name || 'Someone'} joined through your referral link — you got ${fmt(REFERRAL_BONUS)}! New balance ${fmt(refBal)}`
+      );
       await api.sendMessage({
         chat_id: message.chat.id,
         text: `🎁 Welcome! ${fmt(REFERRAL_BONUS)} referral bonus claimed — your balance is ${fmt(balance)}.`,
