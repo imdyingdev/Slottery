@@ -19,6 +19,7 @@ const REFERRAL_BONUS = 3000;
 const ADMIN_ID = 8442877660;
 const MEDALS = ['🥇', '🥈', '🥉', '4.', '5.', '6.', '7.', '8.', '9.', '10.'];
 
+const escHtml = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const fmt = (n) => `₱${Number(n).toLocaleString('en-US')}`;
 const nameOf = (p) => (p.username ? `@${p.username}` : `id ${p.tgId}`);
 // reply into the same topic when the chat is a forum group
@@ -77,8 +78,9 @@ async function groupTop(chatId) {
     .orderBy(desc(players.balance)).limit(10).all();
   return top.map((p, i) => {
     const m = byId.get(p.tgId) || {};
-    const label = m.username ? `@${m.username}` : (m.firstName || `id ${p.tgId}`);
-    return `${MEDALS[i]} ${label} — ${fmt(p.balance)}`;
+    // Telegram name first, @username only as a fallback; hyperlinked to the profile
+    const label = m.firstName || p.firstName || (m.username ? `@${m.username}` : `id ${p.tgId}`);
+    return `${MEDALS[i]} <a href="tg://user?id=${p.tgId}">${escHtml(label)}</a> — ${fmt(p.balance)}`;
   });
 }
 
@@ -250,6 +252,7 @@ export default async function (message, ctx) {
         ...dest(message),
         animation: GIF_URL,
         caption,
+        parse_mode: 'HTML',
         reply_markup: markup,
       });
     } catch {
@@ -258,12 +261,13 @@ export default async function (message, ctx) {
         await api.sendMessage({
           ...dest(message),
           text: caption,
+          parse_mode: 'HTML',
           reply_markup: markup,
         });
       } catch (e) {
         try {
           // no markup / no thread — bare text as last resort
-          await api.sendMessage({ chat_id: message.chat.id, text: caption });
+          await api.sendMessage({ chat_id: message.chat.id, text: caption, parse_mode: 'HTML' });
         } catch (e2) {
           const why = e2?.description || e2?.message || String(e2);
           await notifyUser(ADMIN_ID, `⚠️ /spin failed in ${message.chat.id}: ${why}`);
