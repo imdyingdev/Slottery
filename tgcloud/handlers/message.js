@@ -8,7 +8,7 @@ import { players, spins, groupMembers } from '../schema.js';
 import { findPlayer, getOrCreate } from '../lib/player.js';
 
 // slotsbackend (Puppeteer renderer on Render) — key matches the API_KEY env var
-const BACKEND_URL = 'https://slottery-backend.onrender.com';
+const BACKEND_URL = 'https://slotmachine-a0n1.onrender.com';
 const BACKEND_KEY = '9be1d0b9aaae0aeacf566fb99bf185f8fc0129b382397bed';
 
 const APP_URL = 'https://app8886680607.tgcloud.ai/';
