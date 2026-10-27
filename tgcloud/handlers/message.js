@@ -14,6 +14,8 @@ const BACKEND_KEY = '9be1d0b9aaae0aeacf566fb99bf185f8fc0129b382397bed';
 const APP_URL = 'https://app8886680607.tgcloud.ai/';
 const APP_LINK = 'https://t.me/SlotSpinsBot?startapp=play';
 const GIF_URL = APP_URL + 'giphy.gif';
+const BOT_LINK = 'https://t.me/SlotSpinsBot';
+const REFERRAL_BONUS = 3000;
 const ADMIN_ID = 8442877660;
 const MEDALS = ['🥇', '🥈', '🥉', '4.', '5.', '6.', '7.', '8.', '9.', '10.'];
 
@@ -325,6 +327,54 @@ export default async function (message, ctx) {
         (notified ? '' : ' (could not DM them)'),
     });
     return;
+  }
+
+  // /referral — DM only: a forwardable invite carrying the sender's link
+  if (/^\/referral(?:@\w+)?\s*$/i.test(text) && message.from) {
+    if (isGroup) return;
+    const link = `${BOT_LINK}?start=ref_${message.from.id}`;
+    await api.sendMessage({
+      chat_id: message.chat.id,
+      text:
+        `🎰 Join me on Slottery!\n\nNew players claim ${fmt(REFERRAL_BONUS)} free credits right away.\n\n${link}`,
+      reply_markup: {
+        inline_keyboard: [[{ text: `🎁 Claim ${fmt(REFERRAL_BONUS)}`, url: link }]],
+      },
+    });
+    return;
+  }
+
+  // /start ref_<id> — a brand-new player arriving through a referral link
+  // claims the bonus immediately. Anyone who already has a player row
+  // (opened the app, was deposited, etc.) is not eligible.
+  const refm = text.match(/^\/start(?:@\w+)?\s+ref_(\d+)\s*$/i);
+  if (refm && !isGroup && message.from) {
+    const refId = Number(refm[1]);
+    const existing = await db.select().from(players).where(eq(players.tgId, message.from.id)).get();
+    const referrer = refId !== message.from.id
+      ? await db.select().from(players).where(eq(players.tgId, refId)).get()
+      : null;
+    if (!existing && referrer) {
+      const balance = 1000 + REFERRAL_BONUS;
+      await db.insert(players).values({
+        tgId: message.from.id,
+        username: message.from.username || null,
+        firstName: [message.from.first_name, message.from.last_name].filter(Boolean).join(' ') || null,
+        balance,
+      }).onConflictDoNothing({ target: players.tgId }).run();
+      await db.insert(spins).values({
+        tgId: message.from.id, bet: 0, payout: REFERRAL_BONUS, balance, label: 'REFERRAL BONUS',
+      }).run();
+      await notifyUser(refId, `🎉 ${message.from.first_name || 'Someone'} joined through your referral link!`);
+      await api.sendMessage({
+        chat_id: message.chat.id,
+        text: `🎁 Welcome! ${fmt(REFERRAL_BONUS)} referral bonus claimed — your balance is ${fmt(balance)}.`,
+        reply_markup: {
+          inline_keyboard: [[{ text: '🎰 Play Slots', web_app: { url: APP_URL } }]],
+        },
+      });
+      return;
+    }
   }
 
   // default card — private chats only; in groups only /spin answers

@@ -1294,7 +1294,7 @@ document.getElementById("hist-btn").addEventListener("click", async () => {
   const rows = (r.spins || [])
     .map((s) => {
       const left =
-        s.bet === 0 ? (s.label ? "GKas" : "DEPOSIT") : `₱${s.bet.toLocaleString("en-US")}`;
+        s.bet === 0 ? (s.label?.startsWith("REFERRAL") ? "BONUS" : s.label ? "GKas" : "DEPOSIT") : `₱${s.bet.toLocaleString("en-US")}`;
       const mid =
         s.bet === 0
           ? `${s.payout < 0 ? "−" : "+"}₱${Math.abs(s.payout).toLocaleString("en-US")}`
