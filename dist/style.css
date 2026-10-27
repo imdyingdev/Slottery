@@ -67,13 +67,16 @@ body {
   z-index: 50;
 }
 
-/* top-right corner buttons: history + info */
+/* top-right corner buttons: history + info — 44px band so the 32px
+   buttons vertically center on the credits coin's midline */
 #topright {
   position: fixed;
   top: calc(10px + env(safe-area-inset-top));
   right: 12px;
   z-index: 25;
   display: flex;
+  align-items: center;
+  height: 44px;
   gap: 8px;
 }
 
