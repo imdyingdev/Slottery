@@ -792,6 +792,11 @@ body {
 #fire {
   position: fixed;
   inset: 0;
+  /* explicit CSS size — without it the canvas renders at its bitmap
+     size (viewport × DPR) and flames land ~3x too far down/right on
+     high-DPR phones */
+  width: 100%;
+  height: 100%;
   /* BELOW the jackpot (z:5) so the flames read as burning behind the
      banner — only their edges peek out around its silhouette */
   z-index: 3;
@@ -809,7 +814,7 @@ body {
   position: relative;
   flex: none;
   width: min(92vw, 540px);
-  margin-top: 8px;
+  margin-top: 16px;
   z-index: 5;
 }
 

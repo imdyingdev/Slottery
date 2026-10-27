@@ -573,6 +573,10 @@ function settle() {
     : Math.round((midPay + scatterPay) * (mult || 1) * currentBet().mult);
   if (pendingResult) balance = pendingResult.balance;
   else balance += payout;
+  // the spin's bet fed the shared pool server-side at tap-time, but the
+  // counter only ticks now — the increase reads as caused by THIS spin
+  if (pendingResult && typeof pendingResult.pool === "number")
+    setPool(pendingResult.pool);
   if (midPay > 0) {
     // light up the middle row and run the lightning — rings on the 3 winners,
     // then a strike into the multiplier tile if one applied. Coin shower and
@@ -661,9 +665,6 @@ async function spin() {
     new Promise((r) => setTimeout(() => r(null), 3000)),
   ]);
   pendingResult = remote && Array.isArray(remote.finals) ? remote : null;
-  // this spin's bet already fed the pool server-side — roll the counter up
-  if (pendingResult && typeof pendingResult.pool === "number")
-    setPool(pendingResult.pool);
   const finalsGrid = pendingResult
     ? pendingResult.finals
     : [0, 1, 2].map(() => [randomEdge(), randomSymbol(), randomEdge()]);
