@@ -475,12 +475,20 @@ function fitFrame() {
   const padV =
     parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
   const gap = parseFloat(styles.gap) || 0;
-  const availH = appRect.height - padV - gap - spinBtn.offsetHeight;
+  // reserve vertical room for the spin button AND the jackpot banner
+  // (height + its 16px top margin + both flex gaps) so the whole column
+  // stays on screen when the window is enlarged
+  const jackpotH = (jackpotBox?.offsetHeight || 0) + 16;
+  const availH =
+    appRect.height - padV - gap * 2 - spinBtn.offsetHeight - jackpotH;
   const availW = frameEl.clientWidth;
   let h = availH;
   let w = h * FRAME_ASPECT;
-  if (w > availW) {
-    w = availW;
+  // cap the machine on big desktop windows — past ~600px the art just
+  // grows without adding playable area
+  const maxW = Math.min(availW, 600);
+  if (w > maxW) {
+    w = maxW;
     h = w / FRAME_ASPECT;
   }
   frameInner.style.width = `${w}px`;
@@ -1301,8 +1309,8 @@ histEl.addEventListener("click", (e) => {
 spinBtn.addEventListener("click", () => spin());
 
 // ===== jackpot flames — ported from "Flaming Border.html" =====
-// a tap on the banner ramps particle fire around its edges for ~2.5s,
-// then eases out; the border glow flickers via the --lvl CSS var
+// a tap on the banner ramps particle fire around its edges for ~1.3s
+// (matched to fire.mp3), then eases out
 (() => {
   const cv = document.getElementById("fire");
   const box = document.getElementById("jackpot");
@@ -1380,15 +1388,16 @@ spinBtn.addEventListener("click", () => spin());
   function spawn() {
     const p = pick();
     parts.push({
-      // a few px INSIDE the edge — the canvas sits behind the banner so most
-      // of each flame hides under the image and only tongues peek out
-      x: p.x + (Math.random() - 0.5) * 3 - p.nx * 4,
-      y: p.y - p.ny * 4,
+      // centered ~1px inside the edge — the canvas sits behind the banner so
+      // the inner half of each flame hides under the image while the outer
+      // half licks visibly past its silhouette
+      x: p.x + (Math.random() - 0.5) * 3 - p.nx,
+      y: p.y - p.ny,
       vx: p.nx * (1.5 + Math.random() * 4) + (Math.random() - 0.5) * 4,
       vy: p.ny * (6 + Math.random() * 14) - (25 + Math.random() * 40) * p.k,
       life: (0.3 + Math.random() * 0.3) * p.k * (0.35 + 0.65 * lvl),
       age: 0,
-      size: 2.5 + Math.random() * 3,
+      size: 6 + Math.random() * 5,
       seed: Math.random() * 6.28,
     });
   }
@@ -1410,7 +1419,7 @@ spinBtn.addEventListener("click", () => spin());
     ctx.clearRect(0, 0, W, H);
 
     // ambient light cast by the fire, flickering
-    const fl = lvl * (0.06 + 0.02 * (Math.sin(time * 13) + Math.sin(time * 7.3) + Math.sin(time * 3.1)) / 3);
+    const fl = lvl * (0.1 + 0.03 * (Math.sin(time * 13) + Math.sin(time * 7.3) + Math.sin(time * 3.1)) / 3);
     const cx = rect.x + rect.w / 2, cy = rect.y + rect.h / 2, R = Math.max(rect.w, rect.h) * 1.2;
     const amb = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
     amb.addColorStop(0, `rgba(255,90,10,${fl})`);
