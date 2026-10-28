@@ -2,9 +2,9 @@
 // payouts and results. The Mini App mirrors this for visuals only.
 export const BET = 100;
 // bet → payout multiplier (server-owned so it can't be spoofed)
-// square-root scaling: mult ≈ √(bet/100) — big bets stay near-fair per peso
-// without payouts exploding into hundreds of millions
-export const BET_TIERS = { 100: 1, 500: 2.2, 1000: 3.2, 2500: 5, 4000: 6.3, 5000: 7.1, 8000: 8.9, 10000: 10, 15000: 12.2, 20000: 14.1 };
+// clean ladder: multiplier = tier index (x1 → x10). Bigger bets still get
+// less per peso than ₱100, but far fairer than the original table
+export const BET_TIERS = { 100: 1, 500: 2, 1000: 3, 2500: 4, 4000: 5, 5000: 6, 8000: 7, 10000: 8, 15000: 9, 20000: 10 };
 
 export const BAR_VAL = { "1-bar": 1, "2-bar": 2, "3-bar": 3 };
 export const TRIPLE_PAY = {
