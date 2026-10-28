@@ -1,17 +1,18 @@
 const SYMBOLS = ["cherry", "bell", "1-bar", "2-bar", "3-bar", "7", "seven", "chest"];
 const ROWS = 3;
 const COLS = 3;
+// mirrors tgcloud/lib/game.js BET_TIERS — square-root scaling
 const BETS = [
   { bet: 100, mult: 1 },
-  { bet: 500, mult: 1.4 },
-  { bet: 1000, mult: 1.5 },
-  { bet: 2500, mult: 2 },
-  { bet: 4000, mult: 2.5 },
-  { bet: 5000, mult: 2.8 },
-  { bet: 8000, mult: 3 },
-  { bet: 10000, mult: 3.2 },
-  { bet: 15000, mult: 3.5 },
-  { bet: 20000, mult: 4 },
+  { bet: 500, mult: 2.2 },
+  { bet: 1000, mult: 3.2 },
+  { bet: 2500, mult: 5 },
+  { bet: 4000, mult: 6.3 },
+  { bet: 5000, mult: 7.1 },
+  { bet: 8000, mult: 8.9 },
+  { bet: 10000, mult: 10 },
+  { bet: 15000, mult: 12.2 },
+  { bet: 20000, mult: 14.1 },
 ];
 let betIdx = 0;
 const currentBet = () => BETS[betIdx];
@@ -1265,8 +1266,8 @@ function buildInfo() {
     if the middle row won.</p>
     <p>Bets: ₱100 / ₱500 / ₱1,000 / ₱2,500 / ₱4,000 / ₱5,000 / ₱8,000 / ₱10,000 /
     ₱15,000 / ₱20,000. Bigger bets boost <b>all</b> winnings
-    ×1 → ×1.4 → ×1.5 → ×2 → ×2.5 → ×2.8 → ×3 → ×3.2 → ×3.5 → ×4 — e.g. a ₱50,000 win
-    at ×2.5 pays ₱125,000.</p>`;
+    ×1 → ×2.2 → ×3.2 → ×5 → ×6.3 → ×7.1 → ×8.9 → ×10 → ×12.2 → ×14.1 — e.g. a
+    ₱50,000 win at ×10 pays ₱500,000.</p>`;
   document.getElementById("info-body").innerHTML = html;
 }
 
