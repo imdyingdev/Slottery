@@ -12,6 +12,7 @@ if (!API_KEY) {
 
 const TEMPLATE = await readFile(new URL('./templates/gkas.html', import.meta.url), 'utf8');
 const RECEIPT_TEMPLATE = await readFile(new URL('./templates/receipt.html', import.meta.url), 'utf8');
+const SHOPEE_TEMPLATE = await readFile(new URL('./shopee.html', import.meta.url), 'utf8');
 // inlined as a data URI — setContent has no base URL to resolve relative srcs
 const ICON = `data:image/png;base64,${await readFile(
   new URL('./templates/icon.png', import.meta.url)
@@ -108,6 +109,40 @@ async function renderReceipt({ toName, toNumber, amount }) {
   }
 }
 
+// shopee.html uses {{PLACEHOLDER}} slots instead of element ids — string-fill
+// it before setContent. Everything user/product-supplied is escaped; the
+// product image goes in as an <img> (emoji stays as plain text)
+const esc = (s) =>
+  String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+async function renderShopee({ username, balance, name, price, old, discount, rating, sold, stock, img }) {
+  const page = await (await getBrowser()).newPage();
+  try {
+    await page.setViewport({ width: 360, height: 700, deviceScaleFactor: 2 });
+    const fill = {
+      USERNAME: esc(String(username || 'Player').slice(0, 30)),
+      BALANCE: fmtNum(balance),
+      ITEM_IMAGE: img ? `<img src="${esc(String(img).slice(0, 300))}">` : '🛍️',
+      DISCOUNT: String(Math.round(Number(discount) || 0)),
+      PRICE: fmtNum(price),
+      OLD_PRICE: fmtNum(old),
+      ITEM_NAME: esc(String(name || 'Item').slice(0, 90)),
+      RATING: esc(String(rating ?? '4.5')),
+      SOLD: esc(String(sold ?? '0')),
+      STOCK: String(Math.round(Number(stock) || 0)),
+    };
+    const html = SHOPEE_TEMPLATE.replace(/\{\{(\w+)\}\}/g, (m, k) => fill[k] ?? m);
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 8000 }).catch(() =>
+      page.setContent(html, { waitUntil: 'domcontentloaded' })
+    );
+    await page.evaluate(() => document.fonts.ready);
+    const body = await page.$('body');
+    return await body.screenshot({ type: 'png' });
+  } finally {
+    await page.close();
+  }
+}
+
 const authed = (req) => {
   const got = Buffer.from(req.headers['x-api-key'] || '');
   const want = Buffer.from(API_KEY);
@@ -131,10 +166,13 @@ http
         res.writeHead(200).end('ok');
         return;
       }
-      if (req.method === 'POST' && (req.url === '/gkas' || req.url === '/receipt')) {
+      if (req.method === 'POST' && (req.url === '/gkas' || req.url === '/receipt' || req.url === '/shopee')) {
         if (!authed(req)) return void res.writeHead(401).end('unauthorized');
         const input = JSON.parse((await readBody(req)) || '{}');
-        const png = req.url === '/gkas' ? await renderGkas(input) : await renderReceipt(input);
+        const png =
+          req.url === '/gkas' ? await renderGkas(input)
+          : req.url === '/receipt' ? await renderReceipt(input)
+          : await renderShopee(input);
         res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': png.length });
         res.end(png);
         return;
