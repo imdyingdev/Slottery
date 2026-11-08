@@ -14,6 +14,10 @@ const TEMPLATE = await readFile(new URL('./templates/gkas.html', import.meta.url
 const RECEIPT_TEMPLATE = await readFile(new URL('./templates/receipt.html', import.meta.url), 'utf8');
 const SHOPEE_TEMPLATE = await readFile(new URL('./shopee.html', import.meta.url), 'utf8');
 // inlined as a data URI — setContent has no base URL to resolve relative srcs
+const SHOPEE_LOGO = `data:image/png;base64,${await readFile(
+  new URL('./shopee-com-logo.png', import.meta.url)
+).then((b) => b.toString('base64'))}`;
+// inlined as a data URI — setContent has no base URL to resolve relative srcs
 const ICON = `data:image/png;base64,${await readFile(
   new URL('./templates/icon.png', import.meta.url)
 ).then((b) => b.toString('base64'))}`;
@@ -120,9 +124,14 @@ async function renderShopee({ username, balance, name, price, old, discount, rat
   try {
     await page.setViewport({ width: 360, height: 700, deviceScaleFactor: 2 });
     const fill = {
+      LOGO: SHOPEE_LOGO,
       USERNAME: esc(String(username || 'Player').slice(0, 30)),
       BALANCE: fmtNum(balance),
-      ITEM_IMAGE: img ? `<img src="${esc(String(img).slice(0, 300))}">` : '🛍️',
+      // fallback is an SVG, not an emoji — the headless Chromium on Render
+      // has no emoji font, so emoji render as null boxes
+      ITEM_IMAGE: img
+        ? `<img src="${esc(String(img).slice(0, 300))}">`
+        : '<svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#ee4d2d" stroke-width="1.2" stroke-linejoin="round"><path d="M6 7h12l1 13H5L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>',
       DISCOUNT: String(Math.round(Number(discount) || 0)),
       PRICE: fmtNum(price),
       OLD_PRICE: fmtNum(old),
